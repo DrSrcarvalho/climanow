@@ -11,7 +11,7 @@
         .header { text-align: center; color: white; margin-bottom: 30px; }
         .header h1 { font-size: 48px; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
         .header p { font-size: 18px; opacity: 0.9; }
-        .search-card, .weather-card, .forecast-card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .search-card, .weather-card, .forecast-card, .hourly-card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .search-box { display: flex; gap: 10px; flex-wrap: wrap; }
         .search-box input { flex: 1; padding: 14px 18px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; }
         .search-box input:focus { outline: none; border-color: #1591EA; }
@@ -33,6 +33,19 @@
         .detail-item { background: #f7f7f7; padding: 15px; border-radius: 12px; text-align: center; }
         .detail-item div:first-child { font-size: 14px; color: #666; margin-bottom: 8px; }
         .detail-item strong { font-size: 20px; color: #333; }
+        
+        /* PREVISÃO HORA A HORA */
+        .hourly-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #333; }
+        .hourly-container { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+        .hourly-container::-webkit-scrollbar { height: 5px; }
+        .hourly-container::-webkit-scrollbar-track { background: #e0e0e0; border-radius: 10px; }
+        .hourly-container::-webkit-scrollbar-thumb { background: #1591EA; border-radius: 10px; }
+        .hourly-item { background: #f7f7f7; border-radius: 16px; padding: 10px 12px; min-width: 70px; text-align: center; flex-shrink: 0; transition: transform 0.2s; }
+        .hourly-item:hover { transform: translateY(-2px); background: #e9ecef; }
+        .hourly-time { font-weight: bold; font-size: 13px; color: #1591EA; margin-bottom: 5px; }
+        .hourly-icon { font-size: 24px; margin: 5px 0; }
+        .hourly-temp { font-size: 16px; font-weight: bold; color: #333; }
+        
         .forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 20px; }
         .forecast-day { background: linear-gradient(145deg, #f5f7fa 0%, #e9ecef 100%); padding: 15px; border-radius: 15px; text-align: center; transition: transform 0.2s; }
         .forecast-day:hover { transform: translateY(-3px); }
@@ -47,7 +60,7 @@
         .footer hr { width: 60px; margin: 0 auto 15px auto; border: none; height: 1px; background: rgba(255,255,255,0.3); }
         .footer a { color: #FFD966; text-decoration: none; font-weight: 600; }
         .footer a:hover { text-decoration: underline; }
-        @media (max-width: 600px) { .header h1 { font-size: 32px; } .temp { font-size: 48px; } .city-header h2 { font-size: 22px; } }
+        @media (max-width: 600px) { .header h1 { font-size: 32px; } .temp { font-size: 48px; } .city-header h2 { font-size: 22px; } .hourly-item { min-width: 60px; padding: 8px 10px; } .hourly-icon { font-size: 20px; } .hourly-temp { font-size: 14px; } }
     </style>
 </head>
 <body>
@@ -81,6 +94,12 @@
             </div>
         </div>
 
+        <!-- PREVISÃO HORA A HORA (NOVA) -->
+        <div class="hourly-card" id="hourlyCard" style="display:none;">
+            <div class="hourly-title">⏰ Previsão por Hora - Hoje</div>
+            <div class="hourly-container" id="hourlyContainer"></div>
+        </div>
+
         <div class="forecast-card" id="forecastCard" style="display:none;">
             <h3>📅 Previsão para 5 Dias</h3>
             <div class="forecast-grid" id="listaPrevisao"></div>
@@ -99,33 +118,18 @@
             return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         }
 
-        // Lista de correções manuais
         const correcoes = {
-            'juquei': 'Juqueí',
-            'juquehy': 'Juqueí',
-            'junquei': 'Juqueí',
-            'sampa': 'São Paulo',
-            'bh': 'Belo Horizonte',
-            'bsb': 'Brasília',
-            'rj': 'Rio de Janeiro'
+            'juquei': 'Juqueí', 'juquehy': 'Juqueí', 'junquei': 'Juqueí',
+            'sampa': 'São Paulo', 'bh': 'Belo Horizonte', 'bsb': 'Brasília', 'rj': 'Rio de Janeiro'
         };
 
         function corrigirCidade(nome) {
             const nomeLower = nome.toLowerCase().trim();
-            
-            // Correção manual
-            if (correcoes[nomeLower]) {
-                return correcoes[nomeLower];
-            }
-            
-            // Remove acentos e tenta encontrar
+            if (correcoes[nomeLower]) return correcoes[nomeLower];
             const semAcento = removerAcentos(nomeLower);
             for (let [errado, certo] of Object.entries(correcoes)) {
-                if (removerAcentos(errado) === semAcento) {
-                    return certo;
-                }
+                if (removerAcentos(errado) === semAcento) return certo;
             }
-            
             return nome;
         }
 
@@ -156,6 +160,7 @@
             document.getElementById("errorMsg").style.display = "block";
             document.getElementById("weatherCard").style.display = "none";
             document.getElementById("forecastCard").style.display = "none";
+            document.getElementById("hourlyCard").style.display = "none";
         }
 
         function getIcone(cond) {
@@ -163,11 +168,42 @@
             return icons[cond] || '🌡️';
         }
 
+        // ========== PREVISÃO HORA A HORA ==========
+        function exibirPrevisaoHoraHora(forecastData) {
+            const container = document.getElementById("hourlyContainer");
+            container.innerHTML = "";
+            
+            const proximasMedicoes = forecastData.list.slice(0, 8);
+            
+            proximasMedicoes.forEach(item => {
+                const dataHora = new Date(item.dt_txt);
+                const hora = dataHora.getHours();
+                const horaFormatada = `${hora.toString().padStart(2, '0')}:00`;
+                const temp = Math.round(item.main.temp);
+                const icone = getIcone(item.weather[0].main);
+                
+                container.innerHTML += `
+                    <div class="hourly-item">
+                        <div class="hourly-time">${horaFormatada}</div>
+                        <div class="hourly-icon">${icone}</div>
+                        <div class="hourly-temp">${temp}°C</div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById("hourlyCard").style.display = "block";
+        }
+
+        // ========== PREVISÃO 5 DIAS ==========
         async function buscarPrevisao(cidade) {
             try {
                 const url = `https://api.openweathermap.org/data/2.5/forecast?q=${cidade}&appid=${API_KEY}&units=metric&lang=pt_br&cnt=40`;
                 const resp = await fetch(url);
                 const data = await resp.json();
+                
+                // Exibir hora a hora
+                exibirPrevisaoHoraHora(data);
+                
                 const container = document.getElementById("listaPrevisao");
                 container.innerHTML = "";
                 let dias = {};
@@ -180,11 +216,11 @@
             } catch(e) { console.warn(e); }
         }
 
+        // ========== BUSCAR CLIMA ==========
         async function buscarClima() {
             let cidade = document.getElementById("cidadeInput").value.trim();
             if(!cidade) return;
             
-            // CORREÇÃO: tenta corrigir o nome da cidade
             const cidadeCorrigida = corrigirCidade(cidade);
             if (cidadeCorrigida !== cidade) {
                 document.getElementById("cidadeInput").value = cidadeCorrigida;
@@ -195,11 +231,9 @@
             cidadeAtual = cidade;
             
             try {
-                // Tenta com nome original
                 let url = `https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${API_KEY}&units=metric&lang=pt_br`;
                 let resp = await fetch(url);
                 
-                // Se não encontrar, tenta sem acento
                 if(!resp.ok) {
                     const cidadeSemAcento = removerAcentos(cidade);
                     url = `https://api.openweathermap.org/data/2.5/weather?q=${cidadeSemAcento}&appid=${API_KEY}&units=metric&lang=pt_br`;
