@@ -56,7 +56,7 @@
 
         <div class="search-card">
             <div class="search-box">
-                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro">
+                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro, Juquei">
                 <button onclick="buscarClima()">🔍 Buscar</button>
                 <button class="location-btn" onclick="usarLocalizacao()">📍 Minha Localização</button>
             </div>
@@ -93,6 +93,41 @@
         const API_KEY = "4afaa23f668bd0a83eff2d90655a601b";
         let cidadeAtual = "São Paulo";
         let favoritos = JSON.parse(localStorage.getItem("climanow_fav") || '["São Paulo","Rio de Janeiro","Belo Horizonte"]');
+
+        // ========== CORREÇÃO DE ACENTOS ==========
+        function removerAcentos(texto) {
+            return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        // Lista de correções manuais
+        const correcoes = {
+            'juquei': 'Juqueí',
+            'juquehy': 'Juqueí',
+            'junquei': 'Juqueí',
+            'sampa': 'São Paulo',
+            'bh': 'Belo Horizonte',
+            'bsb': 'Brasília',
+            'rj': 'Rio de Janeiro'
+        };
+
+        function corrigirCidade(nome) {
+            const nomeLower = nome.toLowerCase().trim();
+            
+            // Correção manual
+            if (correcoes[nomeLower]) {
+                return correcoes[nomeLower];
+            }
+            
+            // Remove acentos e tenta encontrar
+            const semAcento = removerAcentos(nomeLower);
+            for (let [errado, certo] of Object.entries(correcoes)) {
+                if (removerAcentos(errado) === semAcento) {
+                    return certo;
+                }
+            }
+            
+            return nome;
+        }
 
         function atualizarFavoritos() {
             document.getElementById("favoritosLista").innerHTML = favoritos.map(c => `<div class="fav-btn" onclick="buscarCidadeDireto('${c}')">⭐ ${c}</div>`).join('');
@@ -146,14 +181,33 @@
         }
 
         async function buscarClima() {
-            const cidade = document.getElementById("cidadeInput").value.trim();
+            let cidade = document.getElementById("cidadeInput").value.trim();
             if(!cidade) return;
+            
+            // CORREÇÃO: tenta corrigir o nome da cidade
+            const cidadeCorrigida = corrigirCidade(cidade);
+            if (cidadeCorrigida !== cidade) {
+                document.getElementById("cidadeInput").value = cidadeCorrigida;
+                cidade = cidadeCorrigida;
+            }
+            
             mostrarLoading(true);
             cidadeAtual = cidade;
+            
             try {
-                const url = `https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${API_KEY}&units=metric&lang=pt_br`;
-                const resp = await fetch(url);
+                // Tenta com nome original
+                let url = `https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                let resp = await fetch(url);
+                
+                // Se não encontrar, tenta sem acento
+                if(!resp.ok) {
+                    const cidadeSemAcento = removerAcentos(cidade);
+                    url = `https://api.openweathermap.org/data/2.5/weather?q=${cidadeSemAcento}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                    resp = await fetch(url);
+                }
+                
                 if(!resp.ok) throw new Error("Cidade inválida");
+                
                 const data = await resp.json();
                 document.getElementById("nomeCidade").innerHTML = `${data.name}, ${data.sys.country}`;
                 document.getElementById("temperatura").innerHTML = `${Math.round(data.main.temp)}°C`;
@@ -168,7 +222,7 @@
                 document.getElementById("weatherCard").style.display = "block";
                 await buscarPrevisao(cidade);
                 mostrarLoading(false);
-            } catch(e) { mostrarLoading(false); mostrarErro("Cidade não encontrada. Tente 'São Paulo'."); }
+            } catch(e) { mostrarLoading(false); mostrarErro(`"${cidade}" não foi encontrada. Tente "São Paulo" ou use "Minha Localização".`); }
         }
 
         function usarLocalizacao() {
