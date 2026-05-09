@@ -5,393 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClimaNow – Previsão do Tempo</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        body {
-            background: #1591EA;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 48px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .header p {
-            font-size: 18px;
-            opacity: 0.9;
-        }
-
-        /* Cards */
-        .search-card, .weather-card, .forecast-card, .hourly-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        /* Busca */
-        .search-box {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 14px 18px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 16px;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #1591EA;
-        }
-
-        .search-box button {
-            padding: 14px 24px;
-            background: #1591EA;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .search-box button:hover {
-            background: #0e7ac9;
-            transform: translateY(-1px);
-        }
-
-        .location-btn {
-            background: #28a745 !important;
-        }
-
-        .location-btn:hover {
-            background: #218838 !important;
-        }
-
-        /* Favoritos */
-        .favorites-list {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .fav-btn {
-            background: #f0f0f0;
-            padding: 8px 16px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .fav-btn:hover {
-            background: #1591EA;
-            color: white;
-        }
-
-        /* Clima Atual */
-        .city-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .city-header h2 {
-            font-size: 28px;
-            color: #333;
-        }
-
-        .fav-star {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-        }
-
-        .weather-main {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin: 20px 0;
-        }
-
-        .temp {
-            font-size: 64px;
-            font-weight: bold;
-            color: #1591EA;
-        }
-
-        .weather-icon {
-            font-size: 64px;
-            text-align: center;
-        }
-
-        .weather-description {
-            text-align: center;
-            margin: 15px 0;
-            font-size: 18px;
-            text-transform: capitalize;
-        }
-
-        .details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .detail-item {
-            background: #f7f7f7;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .detail-item div:first-child {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .detail-item strong {
-            font-size: 20px;
-            color: #333;
-        }
-
-        /* Previsão Hora a Hora */
-        .hourly-title {
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .hourly-container {
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-        }
-
-        .hourly-container::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .hourly-container::-webkit-scrollbar-track {
-            background: #e0e0e0;
-            border-radius: 10px;
-        }
-
-        .hourly-container::-webkit-scrollbar-thumb {
-            background: #1591EA;
-            border-radius: 10px;
-        }
-
-        .hourly-item {
-            background: #f7f7f7;
-            border-radius: 16px;
-            padding: 12px 16px;
-            min-width: 80px;
-            text-align: center;
-            flex-shrink: 0;
-            transition: transform 0.2s;
-        }
-
-        .hourly-item:hover {
-            transform: translateY(-2px);
-            background: #e9ecef;
-        }
-
-        .hourly-time {
-            font-weight: bold;
-            font-size: 14px;
-            color: #1591EA;
-            margin-bottom: 6px;
-        }
-
-        .hourly-icon {
-            font-size: 28px;
-            margin: 6px 0;
-        }
-
-        .hourly-temp {
-            font-size: 17px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        /* Previsão 5 Dias */
-        .forecast-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .forecast-day {
-            background: linear-gradient(145deg, #f5f7fa 0%, #e9ecef 100%);
-            padding: 15px;
-            border-radius: 15px;
-            text-align: center;
-            transition: transform 0.2s;
-        }
-
-        .forecast-day:hover {
-            transform: translateY(-3px);
-        }
-
-        .forecast-date {
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .forecast-icon {
-            font-size: 36px;
-            margin: 10px 0;
-        }
-
-        .forecast-temp {
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        /* Loading e Erro */
-        .loading, .error {
-            text-align: center;
-            padding: 40px;
-            background: white;
-            border-radius: 20px;
-            display: none;
-        }
-
-        .error {
-            color: #dc3545;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #1591EA;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding: 20px;
-            color: white;
-            opacity: 0.9;
-        }
-
-        .footer hr {
-            width: 60px;
-            margin: 0 auto 15px auto;
-            border: none;
-            height: 1px;
-            background: rgba(255,255,255,0.3);
-        }
-
-        .footer a {
-            color: #FFD966;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsivo */
-        @media (max-width: 600px) {
-            .header h1 { font-size: 32px; }
-            .temp { font-size: 48px; }
-            .city-header h2 { font-size: 22px; }
-            .hourly-item { min-width: 70px; padding: 10px 12px; }
-            .hourly-icon { font-size: 24px; }
-            .hourly-temp { font-size: 15px; }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #1591EA; min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 48px; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .header p { font-size: 18px; opacity: 0.9; }
+        .search-card, .weather-card, .forecast-card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .search-box { display: flex; gap: 10px; flex-wrap: wrap; }
+        .search-box input { flex: 1; padding: 14px 18px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; }
+        .search-box input:focus { outline: none; border-color: #1591EA; }
+        .search-box button { padding: 14px 24px; background: #1591EA; color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.2s; }
+        .search-box button:hover { background: #0e7ac9; transform: translateY(-1px); }
+        .location-btn { background: #28a745 !important; }
+        .location-btn:hover { background: #218838 !important; }
+        .favorites-list { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .fav-btn { background: #f0f0f0; padding: 8px 16px; border-radius: 25px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .fav-btn:hover { background: #1591EA; color: white; }
+        .city-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .city-header h2 { font-size: 28px; color: #333; }
+        .fav-star { background: none; border: none; font-size: 28px; cursor: pointer; }
+        .weather-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin: 20px 0; }
+        .temp { font-size: 64px; font-weight: bold; color: #1591EA; }
+        .weather-icon { font-size: 64px; text-align: center; }
+        .weather-description { text-align: center; margin: 15px 0; font-size: 18px; text-transform: capitalize; }
+        .details { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 20px; }
+        .detail-item { background: #f7f7f7; padding: 15px; border-radius: 12px; text-align: center; }
+        .detail-item div:first-child { font-size: 14px; color: #666; margin-bottom: 8px; }
+        .detail-item strong { font-size: 20px; color: #333; }
+        .forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 20px; }
+        .forecast-day { background: linear-gradient(145deg, #f5f7fa 0%, #e9ecef 100%); padding: 15px; border-radius: 15px; text-align: center; transition: transform 0.2s; }
+        .forecast-day:hover { transform: translateY(-3px); }
+        .forecast-date { font-weight: bold; margin-bottom: 8px; }
+        .forecast-icon { font-size: 36px; margin: 10px 0; }
+        .forecast-temp { font-size: 20px; font-weight: bold; }
+        .loading, .error { text-align: center; padding: 40px; background: white; border-radius: 20px; display: none; }
+        .error { color: #dc3545; }
+        .spinner { width: 50px; height: 50px; border: 3px solid #f3f3f3; border-top: 3px solid #1591EA; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .footer { text-align: center; margin-top: 30px; padding: 20px; color: white; opacity: 0.9; }
+        .footer hr { width: 60px; margin: 0 auto 15px auto; border: none; height: 1px; background: rgba(255,255,255,0.3); }
+        .footer a { color: #FFD966; text-decoration: none; font-weight: 600; }
+        .footer a:hover { text-decoration: underline; }
+        @media (max-width: 600px) { .header h1 { font-size: 32px; } .temp { font-size: 48px; } .city-header h2 { font-size: 22px; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🌤️ ClimaNow</h1>
-            <p>Previsão do tempo em tempo real</p>
-        </div>
+        <div class="header"><h1>🌤️ ClimaNow</h1><p>Previsão do tempo em tempo real</p></div>
 
-        <!-- Busca -->
         <div class="search-card">
             <div class="search-box">
-                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro, Juquei">
+                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro">
                 <button onclick="buscarClima()">🔍 Buscar</button>
                 <button class="location-btn" onclick="usarLocalizacao()">📍 Minha Localização</button>
             </div>
             <div class="favorites-list" id="favoritosLista"></div>
         </div>
 
-        <!-- Loading -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Buscando dados do clima...</p>
-        </div>
-
-        <!-- Erro -->
+        <div class="loading" id="loading"><div class="spinner"></div><p>Buscando dados do clima...</p></div>
         <div class="error" id="errorMsg">⚠️ Cidade não encontrada. Verifique o nome e tente novamente.</div>
 
-        <!-- Clima Atual -->
         <div class="weather-card" id="weatherCard" style="display:none;">
-            <div class="city-header">
-                <h2 id="nomeCidade">---</h2>
-                <button class="fav-star" id="favStarBtn" onclick="toggleFavorito()">☆</button>
-            </div>
+            <div class="city-header"><h2 id="nomeCidade">---</h2><button class="fav-star" id="favStarBtn" onclick="toggleFavorito()">☆</button></div>
             <div class="weather-main">
-                <div>
-                    <div class="temp" id="temperatura">--°C</div>
-                    <div>Sensação: <span id="sensacao">--</span>°C</div>
-                </div>
+                <div><div class="temp" id="temperatura">--°C</div><div>Sensação: <span id="sensacao">--</span>°C</div></div>
                 <div class="weather-icon" id="iconeClima">☁️</div>
             </div>
             <div class="weather-description" id="descricao">---</div>
@@ -403,25 +81,12 @@
             </div>
         </div>
 
-        <!-- Previsão Hora a Hora -->
-        <div class="hourly-card" id="hourlyCard" style="display:none;">
-            <div class="hourly-title">⏰ Previsão por Hora - Hoje</div>
-            <div class="hourly-container" id="hourlyContainer"></div>
-        </div>
-
-        <!-- Previsão 5 Dias -->
         <div class="forecast-card" id="forecastCard" style="display:none;">
             <h3>📅 Previsão para 5 Dias</h3>
             <div class="forecast-grid" id="listaPrevisao"></div>
         </div>
 
-        <!-- Footer -->
-        <div class="footer">
-            <hr>
-            <p>Desenvolvido por Sebastião Carvalho</p>
-            <p><a href="https://srcdeveloper.com.br" target="_blank">srcdeveloper.com.br</a></p>
-            <p>© 2026 ClimaNow App - Previsão do Tempo</p>
-        </div>
+        <div class="footer"><hr><p>Desenvolvido por Sebastião Carvalho</p><p><a href="https://srcdeveloper.com.br" target="_blank">srcdeveloper.com.br</a></p><p>© 2026 ClimaNow App - Previsão do Tempo</p></div>
     </div>
 
     <script>
@@ -429,57 +94,8 @@
         let cidadeAtual = "São Paulo";
         let favoritos = JSON.parse(localStorage.getItem("climanow_fav") || '["São Paulo","Rio de Janeiro","Belo Horizonte"]');
 
-        // ========== FUNÇÃO PARA REMOVER ACENTOS ==========
-        function removerAcentos(texto) {
-            return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        }
-
-        // ========== CORREÇÕES MANUAIS PARA CASOS ESPECÍFICOS ==========
-        const correcoesCidades = {
-            'juquei': 'Juqueí',
-            'juquehy': 'Juqueí',
-            'junquei': 'Juqueí',
-            'juqui': 'Juqueí',
-            'juquey': 'Juqueí',
-            'sampa': 'São Paulo',
-            'cidade maravilhosa': 'Rio de Janeiro',
-            'sãopaulo': 'São Paulo',
-            'riodejaneiro': 'Rio de Janeiro',
-            'bh': 'Belo Horizonte',
-            'bsb': 'Brasília',
-            'portoalegre': 'Porto Alegre',
-            'curitiba': 'Curitiba',
-            'floripa': 'Florianópolis',
-            'salvador': 'Salvador',
-            'recife': 'Recife',
-            'fortaleza': 'Fortaleza'
-        };
-
-        function corrigirNomeCidade(nome) {
-            const nomeLower = nome.toLowerCase().trim();
-            
-            // Verifica se tem correção manual
-            if (correcoesCidades[nomeLower]) {
-                return correcoesCidades[nomeLower];
-            }
-            
-            // Remove acentos e tenta encontrar
-            const nomeSemAcento = removerAcentos(nomeLower);
-            
-            for (let [errado, certo] of Object.entries(correcoesCidades)) {
-                const erradoSemAcento = removerAcentos(errado);
-                if (nomeSemAcento === erradoSemAcento) {
-                    return certo;
-                }
-            }
-            
-            return nome;
-        }
-
-        // ========== FUNÇÕES PRINCIPAIS ==========
         function atualizarFavoritos() {
-            const div = document.getElementById("favoritosLista");
-            div.innerHTML = favoritos.map(c => `<div class="fav-btn" onclick="buscarCidadeDireto('${c}')">⭐ ${c}</div>`).join('');
+            document.getElementById("favoritosLista").innerHTML = favoritos.map(c => `<div class="fav-btn" onclick="buscarCidadeDireto('${c}')">⭐ ${c}</div>`).join('');
         }
 
         function buscarCidadeDireto(cidade) {
@@ -489,13 +105,8 @@
 
         function toggleFavorito() {
             const idx = favoritos.indexOf(cidadeAtual);
-            if(idx === -1) {
-                favoritos.push(cidadeAtual);
-                document.getElementById("favStarBtn").innerHTML = "★";
-            } else {
-                favoritos.splice(idx, 1);
-                document.getElementById("favStarBtn").innerHTML = "☆";
-            }
+            if(idx === -1) { favoritos.push(cidadeAtual); document.getElementById("favStarBtn").innerHTML = "★"; }
+            else { favoritos.splice(idx,1); document.getElementById("favStarBtn").innerHTML = "☆"; }
             localStorage.setItem("climanow_fav", JSON.stringify(favoritos));
             atualizarFavoritos();
         }
@@ -510,114 +121,40 @@
             document.getElementById("errorMsg").style.display = "block";
             document.getElementById("weatherCard").style.display = "none";
             document.getElementById("forecastCard").style.display = "none";
-            document.getElementById("hourlyCard").style.display = "none";
         }
 
         function getIcone(cond) {
-            const icons = {
-                Clear: '☀️', Clouds: '☁️', Rain: '🌧️', Drizzle: '🌦️',
-                Thunderstorm: '⛈️', Snow: '❄️', Mist: '🌫️', Smoke: '💨', Haze: '🌫️'
-            };
+            const icons = { Clear:'☀️', Clouds:'☁️', Rain:'🌧️', Drizzle:'🌦️', Thunderstorm:'⛈️', Snow:'❄️', Mist:'🌫️', Smoke:'💨', Haze:'🌫️' };
             return icons[cond] || '🌡️';
         }
 
-        // Previsão Hora a Hora
-        function exibirPrevisaoHoraHora(forecastData) {
-            const container = document.getElementById("hourlyContainer");
-            container.innerHTML = "";
-            
-            const proximasMedicoes = forecastData.list.slice(0, 8);
-            
-            proximasMedicoes.forEach(item => {
-                const dataHora = new Date(item.dt_txt);
-                const hora = dataHora.getHours();
-                const horaFormatada = `${hora.toString().padStart(2, '0')}:00`;
-                const temp = Math.round(item.main.temp);
-                const icone = getIcone(item.weather[0].main);
-                
-                container.innerHTML += `
-                    <div class="hourly-item">
-                        <div class="hourly-time">${horaFormatada}</div>
-                        <div class="hourly-icon">${icone}</div>
-                        <div class="hourly-temp">${temp}°C</div>
-                    </div>
-                `;
-            });
-            
-            document.getElementById("hourlyCard").style.display = "block";
-        }
-
-        // Previsão 5 Dias
         async function buscarPrevisao(cidade) {
             try {
-                const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cidade)}&appid=${API_KEY}&units=metric&lang=pt_br&cnt=40`;
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                exibirPrevisaoHoraHora(data);
-                
+                const url = `https://api.openweathermap.org/data/2.5/forecast?q=${cidade}&appid=${API_KEY}&units=metric&lang=pt_br&cnt=40`;
+                const resp = await fetch(url);
+                const data = await resp.json();
                 const container = document.getElementById("listaPrevisao");
                 container.innerHTML = "";
-                
-                const dias = {};
-                data.list.forEach(item => {
-                    const dataDia = item.dt_txt.split(' ')[0];
-                    if (!dias[dataDia] && Object.keys(dias).length < 5) {
-                        dias[dataDia] = item;
-                    }
-                });
-                
+                let dias = {};
+                data.list.forEach(item => { let dia = item.dt_txt.split(' ')[0]; if(!dias[dia] && Object.keys(dias).length<5) dias[dia]=item; });
                 Object.values(dias).forEach(day => {
-                    const dataObj = new Date(day.dt_txt);
-                    const diaSemana = dataObj.toLocaleDateString('pt-BR', { weekday: 'short' });
-                    container.innerHTML += `
-                        <div class="forecast-day">
-                            <div class="forecast-date">${diaSemana}</div>
-                            <div class="forecast-icon">${getIcone(day.weather[0].main)}</div>
-                            <div class="forecast-temp">${Math.round(day.main.temp)}°C</div>
-                            <div>💧 ${day.main.humidity}%</div>
-                        </div>
-                    `;
+                    let nomeDia = new Date(day.dt_txt).toLocaleDateString('pt-BR',{weekday:'short'});
+                    container.innerHTML += `<div class="forecast-day"><div class="forecast-date">${nomeDia}</div><div class="forecast-icon">${getIcone(day.weather[0].main)}</div><div class="forecast-temp">${Math.round(day.main.temp)}°C</div><div>💧 ${day.main.humidity}%</div></div>`;
                 });
-                
                 document.getElementById("forecastCard").style.display = "block";
-            } catch(error) {
-                console.error("Erro na previsão:", error);
-            }
+            } catch(e) { console.warn(e); }
         }
 
-        // Buscar Clima com correção de acentos
         async function buscarClima() {
-            let cidadeOriginal = document.getElementById("cidadeInput").value.trim();
-            if(!cidadeOriginal) return;
-            
-            // CORREÇÃO: tenta corrigir o nome da cidade
-            const cidadeCorrigida = corrigirNomeCidade(cidadeOriginal);
-            
-            if (cidadeCorrigida !== cidadeOriginal) {
-                document.getElementById("cidadeInput").value = cidadeCorrigida;
-                cidadeOriginal = cidadeCorrigida;
-            }
-            
+            const cidade = document.getElementById("cidadeInput").value.trim();
+            if(!cidade) return;
             mostrarLoading(true);
-            cidadeAtual = cidadeOriginal;
-            
+            cidadeAtual = cidade;
             try {
-                // Tenta buscar com o nome original
-                let url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cidadeOriginal)}&appid=${API_KEY}&units=metric&lang=pt_br`;
-                let response = await fetch(url);
-                
-                // Se não encontrar, tenta remover acentos
-                if(!response.ok) {
-                    const cidadeSemAcento = removerAcentos(cidadeOriginal);
-                    url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cidadeSemAcento)}&appid=${API_KEY}&units=metric&lang=pt_br`;
-                    response = await fetch(url);
-                }
-                
-                if(!response.ok) throw new Error("Cidade não encontrada");
-                
-                const data = await response.json();
-                
+                const url = `https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                const resp = await fetch(url);
+                if(!resp.ok) throw new Error("Cidade inválida");
+                const data = await resp.json();
                 document.getElementById("nomeCidade").innerHTML = `${data.name}, ${data.sys.country}`;
                 document.getElementById("temperatura").innerHTML = `${Math.round(data.main.temp)}°C`;
                 document.getElementById("sensacao").innerHTML = `${Math.round(data.main.feels_like)}°C`;
@@ -627,55 +164,27 @@
                 document.getElementById("visibilidade").innerHTML = `${(data.visibility/1000).toFixed(1)} km`;
                 document.getElementById("descricao").innerHTML = data.weather[0].description;
                 document.getElementById("iconeClima").innerHTML = getIcone(data.weather[0].main);
-                
-                const starBtn = document.getElementById("favStarBtn");
-                starBtn.innerHTML = favoritos.includes(cidadeAtual) ? "★" : "☆";
-                
+                document.getElementById("favStarBtn").innerHTML = favoritos.includes(cidadeAtual) ? "★" : "☆";
                 document.getElementById("weatherCard").style.display = "block";
-                
-                await buscarPrevisao(cidadeAtual);
+                await buscarPrevisao(cidade);
                 mostrarLoading(false);
-                
-            } catch(error) {
-                mostrarLoading(false);
-                mostrarErro(`"${cidadeOriginal}" não foi encontrada. Verifique o nome ou use "Minha Localização".\n\nDica: Tente "Juqueí" (com acento) para praia em SP.`);
-                console.error(error);
-            }
+            } catch(e) { mostrarLoading(false); mostrarErro("Cidade não encontrada. Tente 'São Paulo'."); }
         }
 
-        // Geolocalização
         function usarLocalizacao() {
-            if(!navigator.geolocation) {
-                mostrarErro("Seu navegador não suporta geolocalização");
-                return;
-            }
-            
-            mostrarLoading(true);
-            
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                try {
-                    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&appid=${API_KEY}&units=metric&lang=pt_br`;
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    document.getElementById("cidadeInput").value = data.name;
-                    await buscarClima();
-                } catch(error) {
-                    mostrarLoading(false);
-                    mostrarErro("Não foi possível obter o clima da sua localização");
-                }
-            }, () => {
-                mostrarLoading(false);
-                mostrarErro("Permita o acesso à localização para usar este recurso");
+            if(!navigator.geolocation) return mostrarErro("Geolocalização não suportada.");
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const url = `https://api.openweathermap.org/data/2.5/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                document.getElementById("cidadeInput").value = data.name;
+                buscarClima();
             });
         }
 
-        // Inicialização
         atualizarFavoritos();
         buscarClima();
-        
-        document.getElementById("cidadeInput").addEventListener("keypress", function(e) {
-            if(e.key === "Enter") buscarClima();
-        });
+        document.getElementById("cidadeInput").addEventListener("keypress", e => { if(e.key==='Enter') buscarClima(); });
     </script>
 </body>
 </html>
