@@ -71,7 +71,7 @@
 
         <div class="search-card">
             <div class="search-box">
-                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro">
+                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro, Juquei">
                 <button onclick="buscarClima()">🔍 Buscar</button>
                 <button class="location-btn" onclick="usarLocalizacao()">📍 Minha Localização</button>
             </div>
@@ -113,6 +113,49 @@
         const API_KEY = "4afaa23f668bd0a83eff2d90655a601b";
         let cidadeAtual = "São Paulo";
         let favoritos = JSON.parse(localStorage.getItem("climanow_fav") || '["São Paulo","Rio de Janeiro","Belo Horizonte"]');
+
+        // ========== CORREÇÃO DE ACENTOS E VARIANTES ==========
+        function removerAcentos(texto) {
+            return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        // Lista de correções manuais (ATUALIZADA com "jiquei")
+        const correcoes = {
+            // Juqueí e variações
+            'juquei': 'Juqueí',
+            'juquehy': 'Juqueí',
+            'junquei': 'Juqueí',
+            'juqui': 'Juqueí',
+            'jiqui': 'Juqueí',      // ← NOVO
+            'jiquei': 'Juqueí',     // ← NOVO
+            'juquey': 'Juqueí',
+            // Cidades grandes
+            'sampa': 'São Paulo',
+            'saopaulo': 'São Paulo',
+            'bh': 'Belo Horizonte',
+            'bsb': 'Brasília',
+            'rj': 'Rio de Janeiro',
+            'riodejaneiro': 'Rio de Janeiro'
+        };
+
+        function corrigirCidade(nome) {
+            const nomeLower = nome.toLowerCase().trim();
+            
+            // Correção manual direta
+            if (correcoes[nomeLower]) {
+                return correcoes[nomeLower];
+            }
+            
+            // Remove acentos e tenta encontrar
+            const semAcento = removerAcentos(nomeLower);
+            for (let [errado, certo] of Object.entries(correcoes)) {
+                if (removerAcentos(errado) === semAcento) {
+                    return certo;
+                }
+            }
+            
+            return nome;
+        }
 
         function atualizarFavoritos() {
             document.getElementById("favoritosLista").innerHTML = favoritos.map(c => `<div class="fav-btn" onclick="buscarCidadeDireto('${c}')">⭐ ${c}</div>`).join('');
@@ -183,14 +226,34 @@
         }
 
         async function buscarClima() {
-            let cidade = document.getElementById("cidadeInput").value.trim();
-            if(!cidade) cidade = cidadeAtual;
+            let cidadeOriginal = document.getElementById("cidadeInput").value.trim();
+            if(!cidadeOriginal) return;
+            
+            // CORREÇÃO: aplica o corretor de cidade
+            const cidadeCorrigida = corrigirCidade(cidadeOriginal);
+            
+            if (cidadeCorrigida !== cidadeOriginal) {
+                document.getElementById("cidadeInput").value = cidadeCorrigida;
+                cidadeOriginal = cidadeCorrigida;
+            }
+            
             mostrarLoading(true);
-            cidadeAtual = cidade;
+            cidadeAtual = cidadeOriginal;
+            
             try {
-                const url = `https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${API_KEY}&units=metric&lang=pt_br`;
-                const resp = await fetch(url);
+                // Tenta com o nome original
+                let url = `https://api.openweathermap.org/data/2.5/weather?q=${cidadeOriginal}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                let resp = await fetch(url);
+                
+                // Se não encontrar, tenta sem acento
+                if(!resp.ok) {
+                    const cidadeSemAcento = removerAcentos(cidadeOriginal);
+                    url = `https://api.openweathermap.org/data/2.5/weather?q=${cidadeSemAcento}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                    resp = await fetch(url);
+                }
+                
                 if(!resp.ok) throw new Error("Cidade inválida");
+                
                 const data = await resp.json();
                 document.getElementById("nomeCidade").innerHTML = `${data.name}, ${data.sys.country}`;
                 document.getElementById("temperatura").innerHTML = `${Math.round(data.main.temp)}°C`;
@@ -203,26 +266,45 @@
                 document.getElementById("iconeClima").innerHTML = getIcone(data.weather[0].main);
                 document.getElementById("favStarBtn").innerHTML = favoritos.includes(cidadeAtual) ? "★" : "☆";
                 document.getElementById("weatherCard").style.display = "block";
-                await buscarPrevisao(cidade);
+                await buscarPrevisao(cidadeOriginal);
                 mostrarLoading(false);
-            } catch(e) { mostrarLoading(false); mostrarErro(`"${cidade}" não foi encontrada. Tente "São Paulo" ou use "Minha Localização".`); }
+            } catch(e) { 
+                mostrarLoading(false); 
+                let msg = `"${cidadeOriginal}" não foi encontrada. `;
+                if(cidadeOriginal.toLowerCase().includes('jiquei') || cidadeOriginal.toLowerCase().includes('jiqui')) {
+                    msg += 'Você quis dizer "Juqueí"? (praia em SP)';
+                } else {
+                    msg += 'Tente "São Paulo" ou use "Minha Localização".';
+                }
+                mostrarErro(msg);
+            }
         }
 
         function usarLocalizacao() {
             if(!navigator.geolocation) return mostrarErro("Geolocalização não suportada.");
+            mostrarLoading(true);
             navigator.geolocation.getCurrentPosition(async (pos) => {
-                const url = `https://api.openweathermap.org/data/2.5/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&appid=${API_KEY}&units=metric&lang=pt_br`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                document.getElementById("cidadeInput").value = data.name;
-                buscarClima();
+                try {
+                    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                    const resp = await fetch(url);
+                    const data = await resp.json();
+                    document.getElementById("cidadeInput").value = data.name;
+                    buscarClima();
+                } catch(e) {
+                    mostrarLoading(false);
+                    mostrarErro("Não foi possível obter o clima da sua localização");
+                }
+            }, () => {
+                mostrarLoading(false);
+                mostrarErro("Permita o acesso à localização para usar este recurso");
             });
         }
 
+        // Inicialização
         document.getElementById("cidadeInput").value = "São Paulo";
         atualizarFavoritos();
         buscarClima();
-        document.getElementById("cidadeInput").addEventListener("keypress", e => { if(e.key==='Enter') buscarClima(); });
+        document.getElementById("cidadeInput").addEventListener("keypress", e => { if(e.key === 'Enter') buscarClima(); });
     </script>
 </body>
 </html>
