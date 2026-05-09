@@ -249,7 +249,7 @@
         }
 
         .hourly-temp {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
             color: #333;
         }
@@ -351,6 +351,7 @@
             .city-header h2 { font-size: 22px; }
             .hourly-item { min-width: 70px; padding: 10px 12px; }
             .hourly-icon { font-size: 24px; }
+            .hourly-temp { font-size: 15px; }
         }
     </style>
 </head>
@@ -364,7 +365,7 @@
         <!-- Busca -->
         <div class="search-card">
             <div class="search-box">
-                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro">
+                <input type="text" id="cidadeInput" placeholder="Digite o nome da cidade... Ex: São Paulo, Rio de Janeiro, Juquei">
                 <button onclick="buscarClima()">🔍 Buscar</button>
                 <button class="location-btn" onclick="usarLocalizacao()">📍 Minha Localização</button>
             </div>
@@ -402,12 +403,10 @@
             </div>
         </div>
 
-        <!-- Previsão Hora a Hora (NOVA SEÇÃO) -->
+        <!-- Previsão Hora a Hora -->
         <div class="hourly-card" id="hourlyCard" style="display:none;">
             <div class="hourly-title">⏰ Previsão por Hora - Hoje</div>
-            <div class="hourly-container" id="hourlyContainer">
-                <!-- Dados preenchidos via JavaScript -->
-            </div>
+            <div class="hourly-container" id="hourlyContainer"></div>
         </div>
 
         <!-- Previsão 5 Dias -->
@@ -430,6 +429,54 @@
         let cidadeAtual = "São Paulo";
         let favoritos = JSON.parse(localStorage.getItem("climanow_fav") || '["São Paulo","Rio de Janeiro","Belo Horizonte"]');
 
+        // ========== FUNÇÃO PARA REMOVER ACENTOS ==========
+        function removerAcentos(texto) {
+            return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        // ========== CORREÇÕES MANUAIS PARA CASOS ESPECÍFICOS ==========
+        const correcoesCidades = {
+            'juquei': 'Juqueí',
+            'juquehy': 'Juqueí',
+            'junquei': 'Juqueí',
+            'juqui': 'Juqueí',
+            'juquey': 'Juqueí',
+            'sampa': 'São Paulo',
+            'cidade maravilhosa': 'Rio de Janeiro',
+            'sãopaulo': 'São Paulo',
+            'riodejaneiro': 'Rio de Janeiro',
+            'bh': 'Belo Horizonte',
+            'bsb': 'Brasília',
+            'portoalegre': 'Porto Alegre',
+            'curitiba': 'Curitiba',
+            'floripa': 'Florianópolis',
+            'salvador': 'Salvador',
+            'recife': 'Recife',
+            'fortaleza': 'Fortaleza'
+        };
+
+        function corrigirNomeCidade(nome) {
+            const nomeLower = nome.toLowerCase().trim();
+            
+            // Verifica se tem correção manual
+            if (correcoesCidades[nomeLower]) {
+                return correcoesCidades[nomeLower];
+            }
+            
+            // Remove acentos e tenta encontrar
+            const nomeSemAcento = removerAcentos(nomeLower);
+            
+            for (let [errado, certo] of Object.entries(correcoesCidades)) {
+                const erradoSemAcento = removerAcentos(errado);
+                if (nomeSemAcento === erradoSemAcento) {
+                    return certo;
+                }
+            }
+            
+            return nome;
+        }
+
+        // ========== FUNÇÕES PRINCIPAIS ==========
         function atualizarFavoritos() {
             const div = document.getElementById("favoritosLista");
             div.innerHTML = favoritos.map(c => `<div class="fav-btn" onclick="buscarCidadeDireto('${c}')">⭐ ${c}</div>`).join('');
@@ -474,20 +521,17 @@
             return icons[cond] || '🌡️';
         }
 
-        // NOVA FUNÇÃO: Previsão Hora a Hora (24h - dados a cada 3h)
+        // Previsão Hora a Hora
         function exibirPrevisaoHoraHora(forecastData) {
             const container = document.getElementById("hourlyContainer");
             container.innerHTML = "";
             
-            // Pega as próximas 8 medições (3h em 3h = 24h)
-            const horaAtual = new Date().getHours();
             const proximasMedicoes = forecastData.list.slice(0, 8);
             
             proximasMedicoes.forEach(item => {
                 const dataHora = new Date(item.dt_txt);
                 const hora = dataHora.getHours();
                 const horaFormatada = `${hora.toString().padStart(2, '0')}:00`;
-                
                 const temp = Math.round(item.main.temp);
                 const icone = getIcone(item.weather[0].main);
                 
@@ -503,16 +547,15 @@
             document.getElementById("hourlyCard").style.display = "block";
         }
 
+        // Previsão 5 Dias
         async function buscarPrevisao(cidade) {
             try {
                 const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cidade)}&appid=${API_KEY}&units=metric&lang=pt_br&cnt=40`;
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                // Exibir previsão hora a hora (nova)
                 exibirPrevisaoHoraHora(data);
                 
-                // Previsão 5 dias (existente)
                 const container = document.getElementById("listaPrevisao");
                 container.innerHTML = "";
                 
@@ -543,16 +586,33 @@
             }
         }
 
+        // Buscar Clima com correção de acentos
         async function buscarClima() {
-            const cidade = document.getElementById("cidadeInput").value.trim();
-            if(!cidade) return;
+            let cidadeOriginal = document.getElementById("cidadeInput").value.trim();
+            if(!cidadeOriginal) return;
+            
+            // CORREÇÃO: tenta corrigir o nome da cidade
+            const cidadeCorrigida = corrigirNomeCidade(cidadeOriginal);
+            
+            if (cidadeCorrigida !== cidadeOriginal) {
+                document.getElementById("cidadeInput").value = cidadeCorrigida;
+                cidadeOriginal = cidadeCorrigida;
+            }
             
             mostrarLoading(true);
-            cidadeAtual = cidade;
+            cidadeAtual = cidadeOriginal;
             
             try {
-                const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cidade)}&appid=${API_KEY}&units=metric&lang=pt_br`;
-                const response = await fetch(url);
+                // Tenta buscar com o nome original
+                let url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cidadeOriginal)}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                let response = await fetch(url);
+                
+                // Se não encontrar, tenta remover acentos
+                if(!response.ok) {
+                    const cidadeSemAcento = removerAcentos(cidadeOriginal);
+                    url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cidadeSemAcento)}&appid=${API_KEY}&units=metric&lang=pt_br`;
+                    response = await fetch(url);
+                }
                 
                 if(!response.ok) throw new Error("Cidade não encontrada");
                 
@@ -573,16 +633,17 @@
                 
                 document.getElementById("weatherCard").style.display = "block";
                 
-                await buscarPrevisao(cidade);
+                await buscarPrevisao(cidadeAtual);
                 mostrarLoading(false);
                 
             } catch(error) {
                 mostrarLoading(false);
-                mostrarErro("Cidade não encontrada. Tente 'São Paulo' ou 'Rio de Janeiro'");
+                mostrarErro(`"${cidadeOriginal}" não foi encontrada. Verifique o nome ou use "Minha Localização".\n\nDica: Tente "Juqueí" (com acento) para praia em SP.`);
                 console.error(error);
             }
         }
 
+        // Geolocalização
         function usarLocalizacao() {
             if(!navigator.geolocation) {
                 mostrarErro("Seu navegador não suporta geolocalização");
@@ -608,6 +669,7 @@
             });
         }
 
+        // Inicialização
         atualizarFavoritos();
         buscarClima();
         
